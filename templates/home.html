@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f2e8;
+            --ink: #1e1d1a;
+            --muted: #6e6559;
+            --panel: rgba(255, 252, 246, 0.78);
+            --panel-border: rgba(36, 28, 21, 0.1);
+            --safe: #237a57;
+            --warning: #c7522a;
+            --accent: #0f5b61;
+            --accent-soft: #d8ecee;
+            --shadow: 0 24px 70px rgba(44, 31, 15, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Space Grotesk", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 91, 97, 0.22), transparent 30%),
+                radial-gradient(circle at 90% 20%, rgba(199, 82, 42, 0.16), transparent 22%),
+                linear-gradient(135deg, #f7f2e8 0%, #efe7da 45%, #f8f5ee 100%);
+        }
+
+        .page-shell {
+            padding: 40px 0;
+        }
+
+        .hero-panel,
+        .calculator-panel {
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--panel-border);
+            border-radius: 32px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .hero-panel {
+            min-height: 100%;
+            position: relative;
+        }
+
+        .hero-panel::after {
+            content: "";
+            position: absolute;
+            inset: auto -60px -60px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(15, 91, 97, 0.18), transparent 70%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(15, 91, 97, 0.08);
+            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .display-title {
+            font-family: "Instrument Serif", serif;
+            font-size: clamp(3rem, 5vw, 5.2rem);
+            line-height: 0.96;
+            letter-spacing: -0.04em;
+            margin: 18px 0 14px;
+        }
+
+        .lede {
+            max-width: 32rem;
+            color: var(--muted);
+            font-size: 1.02rem;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .hero-stat {
+            padding: 18px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(36, 28, 21, 0.08);
+        }
+
+        .hero-stat small {
+            display: block;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .hero-stat strong {
+            font-size: 1.55rem;
+        }
+
+        .calculator-panel {
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .section-copy {
+            color: var(--muted);
+            margin-bottom: 22px;
+        }
+
+        .form-label {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .form-control {
+            border-radius: 18px;
+            border: 1px solid rgba(36, 28, 21, 0.14);
+            padding: 15px 16px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        .form-control:focus {
+            border-color: rgba(15, 91, 97, 0.45);
+            box-shadow: 0 0 0 0.25rem rgba(15, 91, 97, 0.12);
+        }
+
+        .btn-primary,
+        .btn-outline-dark {
+            border-radius: 18px;
+            padding: 14px 18px;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0f5b61, #1d7b83);
+            border: 0;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0c4a4f, #17686f);
+        }
+
+        .result-card {
+            margin-top: 24px;
+            padding: 22px;
+            border-radius: 28px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(247, 242, 232, 0.9));
+            border: 1px solid rgba(36, 28, 21, 0.08);
+        }
+
+        .result-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .ring {
+            --progress: 0deg;
+            --ring-color: var(--accent);
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            background:
+                conic-gradient(var(--ring-color) var(--progress), rgba(36, 28, 21, 0.08) 0deg);
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            transition: background 0.45s ease;
+        }
+
+        .ring::before {
+            content: "";
+            width: 98px;
+            height: 98px;
+            border-radius: 50%;
+            background: #fffaf2;
+            box-shadow: inset 0 0 0 1px rgba(36, 28, 21, 0.06);
+        }
+
+        .ring-value {
+            position: absolute;
+            text-align: center;
+        }
+
+        .ring-wrap {
+            position: relative;
+        }
+
+        .ring-number {
+            display: block;
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .ring-label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .status-safe {
+            background: rgba(35, 122, 87, 0.12);
+            color: var(--safe);
+        }
+
+        .status-warning {
+            background: rgba(199, 82, 42, 0.12);
+            color: var(--warning);
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .insight-item {
+            padding: 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(36, 28, 21, 0.06);
+        }
+
+        .insight-item span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+        }
+
+        .insight-item strong {
+            font-size: 1.05rem;
+        }
+
+        .status-line {
+            margin-top: 18px;
+            color: var(--muted);
+        }
+
+        .status-line strong {
+            color: var(--ink);
+        }
+
+        .status-bar {
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(36, 28, 21, 0.08);
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .status-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #0f5b61, #1d7b83);
+            transition: width 0.45s ease, background 0.35s ease;
+        }
+
+        .helper-text,
+        .empty-copy {
+            color: var(--muted);
+        }
+
+        .recovery-box {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(15, 91, 97, 0.06);
+            border: 1px solid rgba(15, 91, 97, 0.12);
+        }
+
+        .recovery-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .recovery-message {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .recovery-line {
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .alert {
+            border-radius: 18px;
+            border: 0;
+        }
+
+        @media (max-width: 991.98px) {
+            .page-shell {
+                padding: 24px 0;
+            }
+
+            .display-title {
+                font-size: 3.1rem;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .hero-grid,
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calculator-panel {
+                padding: 22px;
+            }
+
+            .result-top {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container page-shell">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-6">
+                <section class="hero-panel h-100 p-4 p-md-5">
+                    <span class="eyebrow">Student Utility</span>
+                    <h1 class="display-title">Track attendance before it becomes a problem.</h1>
+                    <p class="lede">
+                        A quick one-page attendance calculator for students who want instant clarity. Enter your numbers, watch the result update live, and see whether you are safely above the 75% line.
+                    </p>
+
+                    <div class="hero-grid">
+                        <div class="hero-stat">
+                            <small>Safety Threshold</small>
+                            <strong>75%</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Live Preview</small>
+                            <strong>Instant</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Works For</small>
+                            <strong>Any Subject</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Calculation</small>
+                            <strong>Same Page</strong>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-lg-6">
+                <section class="calculator-panel h-100">
+                    <h2 class="section-title">Attendance Calculator</h2>
+                    <p class="section-copy">Enter your class count below. The preview updates as you type, and the backend still validates everything on submit.</p>
+
+                    <form method="post" id="attendanceForm" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="total_classes" class="form-label">Total Classes</label>
+                            <input
+                                type="number"
+                                min="1"
+                                class="form-control"
+                                id="total_classes"
+                                name="total_classes"
+                                value="{{ total_classes|default:'' }}"
+                                placeholder="Example: 50"
+                                required
+                            >
+                        </div>
+                        <div class="mb-3">
+                            <label for="attended_classes" class="form-label">Attended Classes</label>
+                            <input
+                                type="number"
+                                min="0"
+                                class="form-control"
+                                id="attended_classes"
+                                name="attended_classes"
+                                value="{{ attended_classes|default:'' }}"
+                                placeholder="Example: 40"
+                                required
+                            >
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button type="submit" class="btn btn-primary flex-fill">Calculate Attendance</button>
+                            <button type="button" class="btn btn-outline-dark flex-fill" id="resetButton">Reset</button>
+                        </div>
+                    </form>
+
+                    {% if error %}
+                        <div class="alert alert-danger mt-4 mb-0">{{ error }}</div>
+                    {% endif %}
+
+                    <div class="result-card" id="resultCard">
+                        <div class="result-top">
+                            <div>
+                                <p class="text-uppercase small fw-bold text-secondary mb-2">Current Result</p>
+                                <h3 class="mb-2">Attendance Snapshot</h3>
+                                <div id="statusBadge" class="status-badge {% if has_result and percentage >= 75 %}status-safe{% elif has_result %}status-warning{% else %}status-safe{% endif %}">
+                                    {% if has_result %}
+                                        {{ status }}
+                                    {% else %}
+                                        Waiting for input
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="ring-wrap">
+                                <div class="ring" id="progressRing">
+                                    <div class="ring-value">
+                                        <span class="ring-number" id="ringNumber">{% if has_result %}{{ percentage }}{% else %}0.00{% endif %}</span>
+                                        <span class="ring-label">Percent</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="status-bar">
+                            <div class="status-fill" id="statusFill"></div>
+                        </div>
+
+                        <p class="status-line mb-0" id="statusLine">
+                            {% if has_result %}
+                                <strong>{{ percentage }}%</strong> attendance recorded. {{ status }}.
+                            {% else %}
+                                <span class="empty-copy">Start entering your data to see a live attendance preview.</span>
+                            {% endif %}
+                        </p>
+
+                        <div class="insight-grid">
+                            <div class="insight-item">
+                                <span>Total Classes</span>
+                                <strong id="summaryTotal">{% if total_classes %}{{ total_classes }}{% else %}0{% endif %}</strong>
+                            </div>
+                            <div class="insight-item">
+                                <span>Attended Classes</span>
+                                <strong id="summaryAttended">{% if attended_classes %}{{ attended_classes }}{% else %}0{% endif %}</strong>
+                            </div>
+                            <div class="insight-item">
+                                <span>Needed to Reach 75%</span>
+                                <strong id="summaryGap">{% if has_result %}{{ needed_classes }}{% else %}0{% endif %}</strong>
+                            </div>
+                        </div>
+
+                        <p class="helper-text mt-3 mb-0" id="helperText">
+                            {% if has_result %}
+                                {% if percentage >= 75 %}
+                                    You are above the safety threshold. Keep this pace going.
+                                {% else %}
+                                    You are below the safety threshold. Attend upcoming classes consistently.
+                                {% endif %}
+                            {% else %}
+                                The formula used is: attended classes / total classes x 100.
+                            {% endif %}
+                        </p>
+
+                        <div class="recovery-box">
+                            <div class="recovery-title">Recovery Plan</div>
+                            <p class="recovery-message mb-2" id="recoveryMessage">
+                                {% if has_result %}
+                                    {% if needed_classes > 0 %}
+                                        You need to attend {{ needed_classes }} more classes to attain 75% attendance.
+                                    {% else %}
+                                        You already meet the 75% attendance requirement.
+                                    {% endif %}
+                                {% else %}
+                                    Enter your attendance details to see how many classes are needed to reach 75%.
+                                {% endif %}
+                            </p>
+                            <p class="recovery-line mb-1" id="currentAttendanceLine">
+                                {% if has_result %}
+                                    {{ current_attendance_text }}
+                                {% else %}
+                                    Current Attendance: 0/0 -> 0.00%
+                                {% endif %}
+                            </p>
+                            <p class="recovery-line mb-0" id="requiredAttendanceLine">
+                                {% if has_result %}
+                                    {{ required_attendance_text }}
+                                {% else %}
+                                    Attendance Required: 0/0 -> 75.00%
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const totalInput = document.getElementById("total_classes");
+        const attendedInput = document.getElementById("attended_classes");
+        const ring = document.getElementById("progressRing");
+        const ringNumber = document.getElementById("ringNumber");
+        const statusBadge = document.getElementById("statusBadge");
+        const statusLine = document.getElementById("statusLine");
+        const statusFill = document.getElementById("statusFill");
+        const summaryTotal = document.getElementById("summaryTotal");
+        const summaryAttended = document.getElementById("summaryAttended");
+        const summaryGap = document.getElementById("summaryGap");
+        const helperText = document.getElementById("helperText");
+        const resetButton = document.getElementById("resetButton");
+        const recoveryMessage = document.getElementById("recoveryMessage");
+        const currentAttendanceLine = document.getElementById("currentAttendanceLine");
+        const requiredAttendanceLine = document.getElementById("requiredAttendanceLine");
+
+        function getNeededClasses(total, attended) {
+            if (total <= 0) {
+                return 0;
+            }
+            if ((attended / total) * 100 >= 75) {
+                return 0;
+            }
+            return Math.ceil(((0.75 * total) - attended) / 0.25);
+        }
+
+        function applyVisualState(percentage, statusText, safe) {
+            const boundedPercentage = Math.max(0, Math.min(percentage, 100));
+            ring.style.setProperty("--progress", `${(boundedPercentage / 100) * 360}deg`);
+            ring.style.setProperty("--ring-color", safe ? "#237a57" : "#c7522a");
+            statusFill.style.width = `${boundedPercentage}%`;
+            statusFill.style.background = safe
+                ? "linear-gradient(90deg, #237a57, #31a271)"
+                : "linear-gradient(90deg, #c7522a, #f08a5d)";
+            statusBadge.textContent = statusText;
+            statusBadge.className = `status-badge ${safe ? "status-safe" : "status-warning"}`;
+        }
+
+        function showEmptyState() {
+            ringNumber.textContent = "0.00";
+            applyVisualState(0, "Waiting for input", true);
+            statusLine.innerHTML = '<span class="empty-copy">Start entering your data to see a live attendance preview.</span>';
+            summaryTotal.textContent = "0";
+            summaryAttended.textContent = "0";
+            summaryGap.textContent = "0";
+            helperText.textContent = "The formula used is: attended classes / total classes x 100.";
+            recoveryMessage.textContent = "Enter your attendance details to see how many classes are needed to reach 75%.";
+            currentAttendanceLine.textContent = "Current Attendance: 0/0 -> 0.00%";
+            requiredAttendanceLine.textContent = "Attendance Required: 0/0 -> 75.00%";
+        }
+
+        function updatePreview() {
+            const total = Number(totalInput.value);
+            const attended = Number(attendedInput.value);
+
+            if (!totalInput.value && !attendedInput.value) {
+                showEmptyState();
+                return;
+            }
+
+            summaryTotal.textContent = totalInput.value || "0";
+            summaryAttended.textContent = attendedInput.value || "0";
+
+            if (!Number.isFinite(total) || !Number.isFinite(attended) || total <= 0 || attended < 0 || attended > total) {
+                ringNumber.textContent = "--";
+                applyVisualState(0, "Check your inputs", false);
+                statusLine.innerHTML = "<strong>Invalid values detected.</strong> Attended classes cannot be greater than total classes, and total classes must be above zero.";
+                summaryGap.textContent = "0";
+                helperText.textContent = "Adjust the inputs to generate a valid attendance result.";
+                recoveryMessage.textContent = "Fix the values above to generate your 75% recovery plan.";
+                currentAttendanceLine.textContent = "Current Attendance: --";
+                requiredAttendanceLine.textContent = "Attendance Required: --";
+                return;
+            }
+
+            const percentage = (attended / total) * 100;
+            const safe = percentage >= 75;
+            const statusText = safe ? "Safe Attendance" : "Low Attendance Warning";
+            const needed = getNeededClasses(total, attended);
+            const targetTotal = total + needed;
+            const targetAttended = attended + needed;
+            const targetPercentage = targetTotal > 0 ? (targetAttended / targetTotal) * 100 : 0;
+
+            ringNumber.textContent = percentage.toFixed(2);
+            applyVisualState(percentage, statusText, safe);
+            statusLine.innerHTML = `<strong>${percentage.toFixed(2)}%</strong> attendance recorded. ${statusText}.`;
+            summaryGap.textContent = needed;
+            helperText.textContent = safe
+                ? "You are above the safety threshold. Keep this pace going."
+                : `You need ${needed} more attended class${needed === 1 ? "" : "es"} in a row to reach 75%.`;
+            recoveryMessage.textContent = safe
+                ? "You already meet the 75% attendance requirement."
+                : `You need to attend ${needed} more classes to attain 75% attendance.`;
+            currentAttendanceLine.textContent = `Current Attendance: ${attended}/${total} -> ${percentage.toFixed(2)}%`;
+            requiredAttendanceLine.textContent = `Attendance Required: ${targetAttended}/${targetTotal} -> ${targetPercentage.toFixed(2)}%`;
+        }
+
+        totalInput.addEventListener("input", updatePreview);
+        attendedInput.addEventListener("input", updatePreview);
+
+        resetButton.addEventListener("click", function () {
+            totalInput.value = "";
+            attendedInput.value = "";
+            showEmptyState();
+            totalInput.focus();
+        });
+
+        updatePreview();
+    </script>
+</body>
+</html>
