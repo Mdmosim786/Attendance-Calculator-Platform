@@ -6,7 +6,7 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-attendance-site-demo-key")
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
+DEBUG = False
 
 
 def get_list_env(name, default=""):
@@ -14,7 +14,7 @@ def get_list_env(name, default=""):
     return [item.strip() for item in raw_value.split(",") if item.strip()]
 
 
-ALLOWED_HOSTS = get_list_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
+ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = get_list_env("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
@@ -72,8 +72,8 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
